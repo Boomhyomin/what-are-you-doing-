@@ -122,7 +122,7 @@ void Back()						//µ¹³µ
 void Advance()					//Ç°½ø
 {
         tpm_pwm_duty(TPM1, TPM_CH0,0);
-	tpm_pwm_duty(TPM1, TPM_CH1,7000);
+	tpm_pwm_duty(TPM1, TPM_CH1,5000);
 }
 void drifting(int Turnflag)					//Æ¯ÒÆ
 {

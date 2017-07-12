@@ -24,9 +24,9 @@ extern uint8 imgbuff[CAMERA_SIZE]; //定义存储接收图像的数组
 int Beacon_Num=0;
 
 int Turn_Flag=0;//漂移方向   0向左 1向右
-int aid=41;//31
+int aid=41;//31   41
 int size=18;
-int ultrasonic_value=500;
+int ultrasonic_value=600;
 
 int speed=0;
 int speed1=0;
@@ -35,6 +35,23 @@ int Beacon_flag=0;    //信标亮灭标志位
 uint32 discount_left=10000;
 uint32 discount_mid=10000;
 uint32 discount_right=10000;
+
+uint32 ABDistance_last =0; 
+uint32 ABDistance_A =0;
+uint32 ABDistance_B =0;
+uint32 ABDistance_C =0;
+uint32 filter[3] = {0};
+uint32 ABDistance_last1 =0; 
+uint32 ABDistance_A1 =0;
+uint32 ABDistance_B1 =0;
+uint32 ABDistance_C1 =0;
+uint32 filter1[3] = {0};
+uint32 ABDistance_last2 =0; 
+uint32 ABDistance_A2 =0;
+uint32 ABDistance_B2 =0;
+uint32 ABDistance_C2 =0;
+uint32 filter2[3] = {0};
+uint32 filter_ChaoShenBo(uint32 *Array,uint8 FilterLen);
 
 void Search()
 {
@@ -111,22 +128,52 @@ void Search()
                   超声波测距
         ********************************/	
         discount_left=ceju_left();
+        ABDistance_A = ABDistance_B;
+        ABDistance_B = ABDistance_C;
+        ABDistance_C = ABDistance_last;
+        ABDistance_last = discount_left; 
+        filter[0] = ABDistance_A;
+        filter[1] = ABDistance_B; 
+        filter[2] = ABDistance_C;
+        discount_left = filter_ChaoShenBo(filter,3);
+        
         discount_mid=ceju_mid();
+        ABDistance_A1 = ABDistance_B1;
+        ABDistance_B1 = ABDistance_C1;
+        ABDistance_C1 = ABDistance_last1;
+        ABDistance_last1 = discount_mid; 
+        filter1[0] = ABDistance_A1;
+        filter1[1] = ABDistance_B1; 
+        filter1[2] = ABDistance_C1;
+        discount_mid = filter_ChaoShenBo(filter1,3);
+        
         discount_right=ceju_right();
+        ABDistance_A2 = ABDistance_B2;
+        ABDistance_B2 = ABDistance_C2;
+        ABDistance_C2 = ABDistance_last2;
+        ABDistance_last2 = discount_right; 
+        filter2[0] = ABDistance_A2;
+        filter2[1] = ABDistance_B2; 
+        filter2[2] = ABDistance_C2;
+        discount_right = filter_ChaoShenBo(filter2,3);
+        
         if(discount_left>10&&discount_left<ultrasonic_value)
         {
-          tpm_pwm_duty(TPM2, TPM_CH1,1587);//1310
-          DELAY_MS(10);
+//          tpm_pwm_duty(TPM2, TPM_CH1,1600);//1310
+//          DELAY_MS(10);
+          drifting(Turn_Flag);
         }
         if(discount_mid>10&&discount_mid<ultrasonic_value)
         {
-          tpm_pwm_duty(TPM2, TPM_CH1,1587);//1310
-          DELAY_MS(10);
+//          tpm_pwm_duty(TPM2, TPM_CH1,1600);//1310
+//          DELAY_MS(10);
+          drifting(Turn_Flag);
         }
         if(discount_right>10&&discount_right<ultrasonic_value)
         {
-          tpm_pwm_duty(TPM2, TPM_CH1,1587);//1310
-          DELAY_MS(10);
+//          tpm_pwm_duty(TPM2, TPM_CH1,1600);//1310
+//          DELAY_MS(10);
+          drifting(Turn_Flag);
         }
         /************************************************************************/
         
@@ -156,7 +203,7 @@ void Search()
 		Error_Now=Mid-aid;
 		Servo_PID();
 	}
-	else if(Max>=size)	//到灯前漂移 
+	/*else if(Max>=size)	//到灯前漂移 
 	{       
                 firstPic++;
                 if(firstPic==1&&Beacon_Num==0)
@@ -169,7 +216,7 @@ void Search()
                 }
                 Last_Max=Max;
 		drifting(Turn_Flag);//漂移 
-	}
+	}*/
 	else if(Max==0)					//上个信标无效
 	{
 		Spin(); //旋转 寻找信标	
@@ -180,9 +227,11 @@ void Search()
         }
 	Display();//显示相关参数	
 }
+
+
 int ceju_left()
 {
-        uint32 timevar=1000;
+        uint32 timevar;
         uint32 flag;
         gpio_init(TRIG_left,GPO,0);
         gpio_init(ECHO_left,GPI,0);
@@ -213,16 +262,14 @@ int ceju_left()
               {
                 timevar=ultrasonic_value+20;
               }
-              
+              return  timevar;
             }
         }  
-        DELAY_MS(10);
-        return  timevar;
-         
+        DELAY_MS(10); 
   }
 int ceju_mid()
 {
-        uint32 timevar=1000;
+        uint32 timevar;
         uint32 flag;
         gpio_init(TRIG_mid,GPO,0);
         gpio_init(ECHO_mid,GPI,0);
@@ -253,15 +300,14 @@ int ceju_mid()
               {
                 timevar=ultrasonic_value+20;
               }
+              return  timevar;
             }
         }  
-        DELAY_MS(10); 
-        return  timevar;
-        
+        DELAY_MS(10);    
   }
 int ceju_right()
 {
-        uint32 timevar=1000;
+        uint32 timevar;
         uint32 flag;
         gpio_init(TRIG_right,GPO,0);
         gpio_init(ECHO_right,GPI,0);
@@ -280,7 +326,6 @@ int ceju_right()
                 break;
             }
         };             
-        
         timevar = pit_time_get_us    (PIT0);    //停止计时，获取计时时间
         if(flag <FLAGWAIT )
         {
@@ -292,13 +337,41 @@ int ceju_right()
               {
                 timevar=ultrasonic_value+20;
               }
-              
+              return  timevar;
             }
         }  
-        DELAY_MS(10);
-        return  timevar;
-         
+        DELAY_MS(10);      
   }
+uint32 filter_ChaoShenBo(uint32 *Array,uint8 FilterLen)//超声波中值滤波
+{
+  uint8 i,j;// 循环变量
+  uint32 Temp;
+  for (j=0; j<FilterLen-1; j++) // 对数组进行排序
+  {
+    for (i =0; i<FilterLen-j-1; i++)
+    {
+      if (Array[i]>Array[i + 1])
+      {
+        Temp = Array[i];
+        Array[i] = Array[i+1];
+        Array[i+1] = Temp;
+      }
+    }
+  }
+  // 计算中值
+  if ((FilterLen & 1) > 0)
+  {
+    // 数组有奇数个元素，返回中间一个元素
+    Temp = Array[(FilterLen + 1) / 2];
+  }
+  else
+  {
+    // 数组有偶数个元素，返回中间两个元素平均值
+    Temp = (Array[FilterLen/2] + Array[FilterLen/2 + 1])/2;
+  }
+  return Temp;
+}
+
 
 void Display()
 {
