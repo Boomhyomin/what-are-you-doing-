@@ -103,7 +103,7 @@ void Search()
         if(discount>10&&discount<ultrasonic_value)
         {
           tpm_pwm_duty(TPM2, TPM_CH1,1587);//1310
-          DELAY_MS(10); 
+          DELAY_MS(11); //10
         }
 	if(Last_Max-Max>Beacon_Max)	//µÆÏ¨Ãð 
 	{
