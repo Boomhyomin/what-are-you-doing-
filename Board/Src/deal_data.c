@@ -5,8 +5,13 @@
 #include "Function.h"
 #include "PID.h"
 #include "SEEKFREE_OLED.h"
-#define TRIG    PTC11//PTC8右  PTC0中    PTC11左
-#define ECHO    PTC12//PTC9  PTC1    PTC12
+#define TRIG_left    PTC11//PTC8右  PTC0中    PTC11左
+#define ECHO_left    PTC12//PTC9  PTC1    PTC12
+#define TRIG_mid     PTC0
+#define ECHO_mid    PTC1
+#define TRIG_right   PTC8
+#define ECHO_right    PTC9
+
 #define FLAGWAIT    0x0FFFF
 int Mid=38 ;//信标中心
 int Error_Now=0;
@@ -27,13 +32,17 @@ int speed=0;
 int speed1=0;
 int firstPic=0;
 int Beacon_flag=0;    //信标亮灭标志位
-uint32 discount=10000;
+uint32 discount_left=10000;
+uint32 discount_mid=10000;
+uint32 discount_right=10000;
 
 void Search()
 {
         int Getsize(int);
         void drifting1(int);
-        int ceju();
+        int ceju_left();
+        int ceju_mid();
+        int ceju_right();
 	int i,j,first_light=0;
 	int Mid_W[CAMERA_W]={0};//最多亮点行的连续亮点
 	int Beacon[CAMERA_H]={0};//记录信标大小
@@ -98,13 +107,30 @@ void Search()
 			Mid_Flag=i;
 		}
 	}
-	/*************************************************************************/	
-        discount=ceju();
-        if(discount>10&&discount<ultrasonic_value)
+	/********************************
+                  超声波测距
+        ********************************/	
+        discount_left=ceju_left();
+        discount_mid=ceju_mid();
+        discount_right=ceju_right();
+        if(discount_left>10&&discount_left<ultrasonic_value)
         {
           tpm_pwm_duty(TPM2, TPM_CH1,1587);//1310
-          DELAY_MS(11); //10
+          DELAY_MS(10);
         }
+        if(discount_mid>10&&discount_mid<ultrasonic_value)
+        {
+          tpm_pwm_duty(TPM2, TPM_CH1,1587);//1310
+          DELAY_MS(10);
+        }
+        if(discount_right>10&&discount_right<ultrasonic_value)
+        {
+          tpm_pwm_duty(TPM2, TPM_CH1,1587);//1310
+          DELAY_MS(10);
+        }
+        /************************************************************************/
+        
+        
 	if(Last_Max-Max>Beacon_Max)	//灯熄灭 
 	{
                 firstPic=0;//置信标亮灭标志位为0
@@ -154,20 +180,20 @@ void Search()
         }
 	Display();//显示相关参数	
 }
-int ceju()
+int ceju_left()
 {
-        uint32 timevar;
+        uint32 timevar=1000;
         uint32 flag;
-        gpio_init(TRIG,GPO,0);
-        gpio_init(ECHO,GPI,0);
+        gpio_init(TRIG_left,GPO,0);
+        gpio_init(ECHO_left,GPI,0);
         flag = 0;
-        gpio_set(TRIG,1);               //产生触发脉冲
+        gpio_set(TRIG_left,1);               //产生触发脉冲
         pit_delay_us(PIT1,15);
-        gpio_set(TRIG,0);
+        gpio_set(TRIG_left,0);
         
-        while(gpio_get(ECHO) == 0);             //等待电平变高，低电平一直等待
+        while(gpio_get(ECHO_left) == 0);             //等待电平变高，低电平一直等待
         pit_time_start  (PIT0);                 //开始计时
-        while(gpio_get(ECHO) == 1)              //等待电平变低，高电平一直等待
+        while(gpio_get(ECHO_left) == 1)              //等待电平变低，高电平一直等待
         {
             flag++;
             if(flag>FLAGWAIT)
@@ -185,20 +211,100 @@ int ceju()
             {
               if (timevar>ultrasonic_value) 
               {
-                timevar=ultrasonic_value+1;
+                timevar=ultrasonic_value+20;
               }
-              return  timevar;//打印延时时间
+              
             }
-        }
+        }  
+        DELAY_MS(10);
+        return  timevar;
+         
+  }
+int ceju_mid()
+{
+        uint32 timevar=1000;
+        uint32 flag;
+        gpio_init(TRIG_mid,GPO,0);
+        gpio_init(ECHO_mid,GPI,0);
+        flag = 0;
+        gpio_set(TRIG_mid,1);               //产生触发脉冲
+        pit_delay_us(PIT1,15);
+        gpio_set(TRIG_mid,0);
         
+        while(gpio_get(ECHO_mid) == 0);             //等待电平变高，低电平一直等待
+        pit_time_start  (PIT0);                 //开始计时
+        while(gpio_get(ECHO_mid) == 1)              //等待电平变低，高电平一直等待
+        {
+            flag++;
+            if(flag>FLAGWAIT)
+            {
+                break;
+            }
+        };             
+        
+        timevar = pit_time_get_us    (PIT0);    //停止计时，获取计时时间
+        if(flag <FLAGWAIT )
+        {
+            timevar = timevar * 340 /2/1000;
+                
+            if(timevar > 5)
+            {
+              if (timevar>ultrasonic_value) 
+              {
+                timevar=ultrasonic_value+20;
+              }
+            }
+        }  
         DELAY_MS(10); 
+        return  timevar;
+        
+  }
+int ceju_right()
+{
+        uint32 timevar=1000;
+        uint32 flag;
+        gpio_init(TRIG_right,GPO,0);
+        gpio_init(ECHO_right,GPI,0);
+        flag = 0;
+        gpio_set(TRIG_right,1);               //产生触发脉冲
+        pit_delay_us(PIT1,15);
+        gpio_set(TRIG_right,0);
+        
+        while(gpio_get(ECHO_right) == 0);             //等待电平变高，低电平一直等待
+        pit_time_start  (PIT0);                 //开始计时
+        while(gpio_get(ECHO_right) == 1)              //等待电平变低，高电平一直等待
+        {
+            flag++;
+            if(flag>FLAGWAIT)
+            {
+                break;
+            }
+        };             
+        
+        timevar = pit_time_get_us    (PIT0);    //停止计时，获取计时时间
+        if(flag <FLAGWAIT )
+        {
+            timevar = timevar * 340 /2/1000;
+                
+            if(timevar > 5)
+            {
+              if (timevar>ultrasonic_value) 
+              {
+                timevar=ultrasonic_value+20;
+              }
+              
+            }
+        }  
+        DELAY_MS(10);
+        return  timevar;
+         
   }
 
 void Display()
 {
-  OLED_Print_Num(80, 2, discount);
-  OLED_Print_Num(80, 4, Max);//最大值
-  OLED_Print_Num(80, 6, Encoder);
+  OLED_Print_Num(80, 2, discount_left);
+  OLED_Print_Num(80, 4, discount_mid);//最大值
+  OLED_Print_Num(80, 6, discount_right);
 }
 void GetImage()
 {
