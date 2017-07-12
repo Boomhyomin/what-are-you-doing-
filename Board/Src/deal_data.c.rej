@@ -1,0 +1,21 @@
+diff a/Board/Src/deal_data.c b/Board/Src/deal_data.c	(rejected hunks)
+@@ -32,13 +32,17 @@
+ int speed1=0;
+ int firstPic=0;
+ int Beacon_flag=0;    //ÐÅ±êÁÁÃð±êÖ¾Î»
+-uint32 discount=10000;
++uint32 discount_left=10000;
++uint32 discount_mid=10000;
++uint32 discount_right=10000;
+ 
+ void Search()
+ {
+         int Getsize(int);
+         void drifting1(int);
+-        int ceju();
++        int ceju_left();
++        int ceju_mid();
++        int ceju_right();
+ 	int i,j,first_light=0;
+ 	int Mid_W[CAMERA_W]={0};//×î¶àÁÁµãÐÐµÄÁ¬ÐøÁÁµã
+ 	int Beacon[CAMERA_H]={0};//¼ÇÂ¼ÐÅ±ê´óÐ¡

@@ -116,7 +116,7 @@ void Stop()						//停车
 void Back()						//倒车 
 {
 	tpm_pwm_duty(TPM1, TPM_CH1,0);
-	tpm_pwm_duty(TPM1, TPM_CH0,5000);
+	tpm_pwm_duty(TPM1, TPM_CH0,4000);
 }
 
 void Advance()					//前进
