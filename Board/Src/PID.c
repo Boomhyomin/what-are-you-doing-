@@ -80,7 +80,7 @@ void advance1() //灯前减速   用pid
 void Servo_PID()
 {
 	int Servo_P ;
-	Servo_P =4;//Get_Switch();//5
+	Servo_P =3;//Get_Switch();//5
 	int Turn_Value;
 	Turn_Value=Servo_Mid+(-1)*Error_Now*Servo_P;
 	
@@ -116,13 +116,13 @@ void Stop()						//停车
 void Back()						//倒车 
 {
 	tpm_pwm_duty(TPM1, TPM_CH1,0);
-	tpm_pwm_duty(TPM1, TPM_CH0,4000);
+	tpm_pwm_duty(TPM1, TPM_CH0,7000);
 }
 
 void Advance()					//前进
 {
         tpm_pwm_duty(TPM1, TPM_CH0,0);
-	tpm_pwm_duty(TPM1, TPM_CH1,5000);
+	tpm_pwm_duty(TPM1, TPM_CH1,7000);
 }
 void drifting(int Turnflag)					//漂移
 {

@@ -24,8 +24,8 @@ extern uint8 imgbuff[CAMERA_SIZE]; //定义存储接收图像的数组
 int Beacon_Num=0;
 
 int Turn_Flag=0;//漂移方向   0向左 1向右
-int aid=41;//31   41
-int size=19;
+int aid=40;//31   41
+int size=18;
 int ultrasonic_value=400;
 
 int speed=0;
